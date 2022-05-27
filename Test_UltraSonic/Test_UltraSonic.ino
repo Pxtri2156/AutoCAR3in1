@@ -56,7 +56,12 @@ void setup() {
 
 void loop()
 {
-  khoangcach = 0;
+  avoiding();
+
+}
+void avoiding(){
+  
+khoangcach = 0;
   dokhoangcach();
   Serial.println(khoangcach);
   if (khoangcach > gioihan || khoangcach == 0)
@@ -96,8 +101,8 @@ void loop()
       }
     }
   }
-
-}
+  
+  }
 void dilui()
 {
   analogWrite(enbA, 100);

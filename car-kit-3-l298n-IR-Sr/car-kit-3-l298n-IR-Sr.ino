@@ -44,13 +44,12 @@ UCNEC myIR(A0);
 
 NewPing sonar(TRIG_PIN, ECHO_PIN, MAX_DISTANCE); 
 boolean goesForward=false;
-int distance = 100;
+int distance;
 int speedSet = 0;
+int dugme=1;
+unsigned long thoigian; 
 
-//const int onfar = 13;
-int       dugme=1;
-
-// Motor control pins: L298N H bridge
+// Motor control pins: L298N
 const int enAPin = 6; // Left motor PWM speed control
 const int in1Pin = 7; // Left motor Direction 1
 const int in2Pin = 5; // Left motor Direction 2
@@ -58,8 +57,7 @@ const int in3Pin = 4; // Right motor Direction 1
 const int in4Pin = 2; // Right motor Direction 2
 const int enBPin = 3; // Right motor PWM speed control
 
-int command;               //bien luu trang thai Bluetooth
-int speedCar    = 250;     // toc do 50 - 255.
+int speedCar    = 160;     // toc do 50 - 255.
 int speed_Coeff = 4;       // he so suy giam <=> giam may lan toc do
 void setup() {
       pinMode(enAPin, OUTPUT);
@@ -68,39 +66,36 @@ void setup() {
       pinMode(in3Pin, OUTPUT);
       pinMode(in4Pin, OUTPUT);
       pinMode(enBPin, OUTPUT);
-      myIR.begin();
-      Serial.begin(9600); 
       myservo.attach(8); 
       pinMode(TRIG_PIN, OUTPUT);
       pinMode(ECHO_PIN, INPUT);
       myservo.write(95); 
-      testServo();
       delay(200);
       readPing();
+      testServo();
+      Serial.begin(9600);
+      myIR.begin();
+      
 }
 
 void loop() {
   if(myIR.available())
       {
+            delay(200);
+           Serial.println("Vao myIR");
             IR_signal =  myIR.read();
             Serial.println(IR_signal);
+              switch (IR_signal) {
+                case F:goAhead();break;
+                case B:goBack();break;
+                case L:goLeft();break;
+                case R:goRight();break;
+                case U:avoiding();break;
+                case T:stopAvoiding();break;
+                case S: stopRobot(); break;
+               }
       }
-//      if (IR_signal == F){goAhead();} 
-//      else if (IR_signal == B) {goBack();} 
-//      else if (IR_signal == L) {goLeft();} 
-//      else if (IR_signal == R) {goRight();} 
-//      else if (IR_signal == S) {stopRobot();IR_signal=0;}
-//      else if (IR_signal == U) {avoiding();IR_signal=0;} 
-//      else if (IR_signal == T) {stopAvoiding();IR_signal=0;} 
-  switch (IR_signal) {
-          case F:goAhead();break;
-          case B:goBack();break;
-          case L:goLeft();break;
-          case R:goRight();break;
-          case U:avoiding();break;
-          case T:stopAvoiding();break;
-          case S: stopRobot(); break;
-  }
+
 }
 
 void goAhead(){ 
@@ -180,7 +175,6 @@ void goBackLeft(){
       digitalWrite(in4Pin,LOW);         // RIGHT lui
       analogWrite(enAPin, speedCar/speed_Coeff);//banh trai quay cham hon
       analogWrite(enBPin, speedCar);  
-
   }
 
 void stopRobot(){  
@@ -190,11 +184,11 @@ void stopRobot(){
       digitalWrite(in4Pin,LOW);         
       analogWrite(enAPin, 0);
       analogWrite(enBPin, 0);  
-      
   }
 
  void stopAvoiding()
 {
+  Serial.println("Called stop avoiding");
   dugme=0;
   digitalWrite(in1Pin,LOW);      
   digitalWrite(in2Pin,LOW);      
@@ -203,28 +197,35 @@ void stopRobot(){
   analogWrite(enAPin, 0);
   analogWrite(enBPin, 0); 
 }
-
+  
 void avoiding()
 {
     long duration, distance;
     int distanceR = 0;
-    int distanceL =  0;
+    int distanceL = 0;
      while(dugme==1)
      { 
+         distance = 0;
          distance = readPing();
+         Serial.print("distance: ");
+         Serial.println(distance);
          delay(40);
          if(distance<=30)
          {
               stopRobot();
               delay(100);
               goBack();
-              delay(200);
+              delay(300);
               stopRobot();
-              delay(200);
+              delay(500);
               distanceR = lookRight();
-              delay(200);
+              delay(500);
               distanceL = lookLeft();
-              delay(200);
+              delay(500);
+              Serial.print("distanceR: ");
+              Serial.println(distanceR);
+              Serial.print(" distanceL: ");
+              Serial.println(distanceL);
               if(distanceR>=distanceL)
               {
                 goRight();
@@ -241,15 +242,15 @@ void avoiding()
          }else
          {
           goAhead();
-         }
-         
+         } 
      }
 }
+
 int lookRight()
 {
     Serial.println("look Right");
     myservo.write(40); 
-    delay(500);
+    delay(1000);
     int distance = readPing();
     delay(100);
     myservo.write(95); 
@@ -260,7 +261,7 @@ int lookLeft()
 {
     Serial.println("look Left");
     myservo.write(150); 
-    delay(500);
+    delay(1000);
     int distance = readPing();
     delay(100);
     myservo.write(95); 
@@ -279,7 +280,11 @@ int readPing() {
 }
 
 void testServo(){
+  Serial.println("called test servo");
   myservo.write(150); 
-  myservo.write(40); 
+  delay(500);
+  myservo.write(40);
+  delay(500); 
   myservo.write(90);
+  delay(500);
 }
